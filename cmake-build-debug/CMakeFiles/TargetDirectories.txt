@@ -1,0 +1,3 @@
+/home/mario/Scrivania/Progetto Sistemi Operativi/cmake-build-debug/CMakeFiles/ProvaSegnale.dir
+/home/mario/Scrivania/Progetto Sistemi Operativi/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/mario/Scrivania/Progetto Sistemi Operativi/cmake-build-debug/CMakeFiles/rebuild_cache.dir
