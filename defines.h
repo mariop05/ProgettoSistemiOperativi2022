@@ -13,9 +13,12 @@
 void create_directory(char *pathname);
 DIR* open_directory(char *pathname);
 int length_pathname(char *pathname);
-int equal_start_file(char sendMe[], struct dirent *dentry);
 void create_pathname_format(struct dirent *dentry, int i, char *pathname);
-int print_file(int flag, struct stat buffer, char *pathname, struct dirent *dentry);
+int equal_start_file(char sendMe[], struct dirent *dentry, int flag, char *pathname);
+int print_file(int flag, char *pathname, struct dirent *dentry, char file_pathname_sendme[100][250]);
 int close_directory(DIR *dir);
 void sigHandlerINT(int sig);
 void sigHandlerUSR1(int sig);
+void riempo_array_pari(char array[], int caratteri, int fd_file);
+void stampo_array_divisione_file(char array[], int caratteri);
+int conta_caratteri(int open_file);

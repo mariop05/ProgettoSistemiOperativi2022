@@ -34,7 +34,6 @@ int main() {
     printf("numero file sendme_ : %d\n", ricevo_file_sendme[0]);
 
 
-
     // Rimozione delle FIFO
     rimozioneFifo(myfifo1);
     rimozioneFifo(myfifo2);
