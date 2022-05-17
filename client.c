@@ -33,6 +33,7 @@ int main (int argc, char *argv[]) {
     int flag = 0; // Variabile che indica se un file inizia con 'sendme_'
     int i = -1, j, k;
     int open_file;
+    char *username;
     char sendMe[] = "sendme_";
     char directory_corrente[SIZE];
     char file_pathname_sendme[100][250];
@@ -66,7 +67,7 @@ int main (int argc, char *argv[]) {
     create_directory(argv[1]);
     //printf("argv[1]: %s\n", argv[1]);
     // Get the username of name
-    char *username = getenv("USER");
+    username = getenv("USER");
     if(username == NULL)
         username = "unknown";
     // Imposto la directory passata dall'utente
@@ -108,34 +109,25 @@ int main (int argc, char *argv[]) {
         flag = 0;
     }
 
-//    //Stampo la matrice con i pathname
-//    printf("Stampo matrice:\n");
-//    for(j = 0; j <= count; j++){
-//        for (int k = 0; file_pathname_sendme[j][k] != '\0'; k++) {
-//            printf("%c", file_pathname_sendme[j][k]);
-//        }
-//        printf("\n");
-//    }
-
-    printf("count: %d\n", count);
+    //printf("count: %d\n", count);
     file_sendme[0] = count;
     //Apertura fifo in scrittura
     fd1 = apertura_fifo_scrittura(myfifo1);
     //Scrittura su fifo
     scrittura_fifo(fd1, file_sendme);
 
-    printf("count: %d\n", count);
+    //printf("count: %d\n", count);
     //Generazione processi figli tanti quanti sono i file che iniziano con 'sendme_'
     printf("Creazione processi figli\n");
-    i = 0;
-    for(i = 0; i < count; ++i) {
-        printf("count for: %d\n", count);
-        printf("i: %d\n", i);
+    for(i = 0; i <= count - 1; i++) {
+//        printf("count for: %d\n", count);
+//        printf("i: %d\n", i);
         child = fork();
-        printf("child: %d\n", child);
+//        printf("child: %d\n", child);
         if (child == -1)
             ErrExit("Error fork");
         else if (child == 0) {
+            printf("Sono il processo figlio PID: %d\n", getpid());
             //Apertura file
             open_file = open(file_pathname_sendme[i], O_RDWR);
             if (open_file == -1)
@@ -143,13 +135,13 @@ int main (int argc, char *argv[]) {
             //printf("Aperto file: %s\n", file_pathname_sendme[i]);
             //Salvo quanti caratteri ha un file
             caratteri = conta_caratteri(open_file);
-
+            printf("caratteri: %ld\n", caratteri);
             if ((caratteri % 4) == 0) {
                 // Inizializzo i 4 array che conterranno i caratteri del file
-                char file1[caratteri / 4];
-                char file2[caratteri / 4];
-                char file3[caratteri / 4];
-                char file4[caratteri / 4];
+                char file1[caratteri/4];
+                char file2[caratteri/4];
+                char file3[caratteri/4];
+                char file4[caratteri/4];
 
                 //Inserisco 1/4 nell'array file1
                 riempo_array_pari(file1, caratteri / 4, open_file);
@@ -162,42 +154,41 @@ int main (int argc, char *argv[]) {
 
                 //Stampo array per verifica
                 //1/4 file 1
-                stampo_array_divisione_file(file1, caratteri / 4);
-                stampo_array_divisione_file(file2, caratteri / 4);
-                stampo_array_divisione_file(file3, caratteri / 4);
-                stampo_array_divisione_file(file4, caratteri / 4);
+                stampo_array_divisione_file(file1, caratteri/4);
+                stampo_array_divisione_file(file2, caratteri/4);
+                stampo_array_divisione_file(file3, caratteri/4);
+                stampo_array_divisione_file(file4, caratteri/4);
+                exit(0);
             }
-                // File contenente un numero di carateri dispari
+                // File contenente un numero non multiplo di 4
             else {
-                char file1[caratteri / 4];
-                char file2[caratteri / 4];
-                char file3[caratteri / 4];
-                char file4[caratteri % 4];
+                char file1[caratteri/4+1];
+                char file2[caratteri/4+1];
+                char file3[caratteri/4+1];
+                char file4[caratteri%4];
 
+                printf("resto: %ld\n", caratteri%4);
                 //Inserisco 1/4 nell'array file1
-                riempo_array_pari(file1, caratteri / 4, open_file);
+                riempo_array_pari(file1, caratteri/4+1, open_file);
                 //Inserisco 1/4 nell'array file2
-                riempo_array_pari(file2, caratteri / 4, open_file);
+                riempo_array_pari(file2, caratteri/4+1, open_file);
                 //Inserisco 1/4 nell'array file1/
-                riempo_array_pari(file3, caratteri / 4, open_file);
+                riempo_array_pari(file3, caratteri/4+1, open_file);
                 // /Inserisco 1/4 nell'array file1
-                riempo_array_pari(file4, caratteri % 4, open_file);
+                riempo_array_pari(file4, caratteri/4, open_file);
 
                 //Stampo array per verifica
                 //1/4 file 1
-                stampo_array_divisione_file(file1, caratteri / 4);
-                stampo_array_divisione_file(file2, caratteri / 4);
-                stampo_array_divisione_file(file3, caratteri / 4);
-                stampo_array_divisione_file(file4, caratteri / 4);
+                stampo_array_divisione_file(file1, caratteri/4+1);
+                stampo_array_divisione_file(file2, caratteri/4+1);
+                stampo_array_divisione_file(file3, caratteri/4+1);
+                stampo_array_divisione_file(file4, caratteri/4);
             }
             exit(0);
-//            printf("caratteri: %ld\n", caratteri);
-
-        } else {
-            //Sono nel processo genitore
+        }
+        //Sono nel processo genitore
             if (wait(NULL) == -1)
                 ErrExit("error wait");
-        }
     }
     //chiudo la cartella
     close_directory(dp);

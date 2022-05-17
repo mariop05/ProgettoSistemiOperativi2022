@@ -22,3 +22,4 @@ void sigHandlerUSR1(int sig);
 void riempo_array_pari(char array[], int caratteri, int fd_file);
 void stampo_array_divisione_file(char array[], int caratteri);
 int conta_caratteri(int open_file);
+char stampa_username();
