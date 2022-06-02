@@ -2,6 +2,8 @@
 /// @brief Contiene l'implementazione delle funzioni
 ///         specifiche per la gestione della MEMORIA CONDIVISA.
 
+#include <fcntl.h>
+#include <unistd.h>
 #include "err_exit.h"
 #include "shared_memory.h"
 #include <sys/msg.h>
@@ -10,7 +12,7 @@
 
 // ftok generate a unique key
 int generateUniqueKey(){
-    return ftok("shmfile", 65);
+    return ftok("/tmp/shmfile", 65);
 }
 // attach the shared memory
 int alloc_shared_memory(key_t key, size_t size, int shmflg){
@@ -19,7 +21,7 @@ int alloc_shared_memory(key_t key, size_t size, int shmflg){
 }
 void *get_shared_memory(int shmid, int shmflg){
     //attach the shared memory
-    void *ptr_sh = shmat(shmid, NULL, shmflg);
+    void *ptr_sh = shmat(shmid, (void*) 0, shmflg);
     if(ptr_sh == (void*)-1)
         ErrExit("shmat failed");
     return ptr_sh;
@@ -31,9 +33,20 @@ void free_shared_memory(char *str){
     }
 }
 void remove_shared_memory(int shmid){
+    char *pathname = "/tmp/pathname.txt";
     //delete the shared memory segment
     if(shmctl(shmid, IPC_RMID, NULL) == -1){
         ErrExit("shmctl failed");
     }
+    if(unlink("/tmp/shmfile") == -1)
+        ErrExit("Error delete file");
 }
-
+int generate_unique_key_message_queue(){
+    return ftok("/tmp/msgfile.txt", 1);
+}
+int create_message_queue(key_t key){
+    int msgid = msgget(key, S_IRUSR | S_IWUSR);
+    if(msgid == -1)
+        ErrExit("error create message queue");
+    return msgid;
+}

@@ -1,5 +1,5 @@
 # ninja log v5
 33	48	1650912344562806695	ProvaSegnale	c31963f2346548a8
-0	19	1652617320256918727	build.ninja	b6eec442f40fa5e1
+0	19	1654157773680441216	build.ninja	b6eec442f40fa5e1
 0	33	1650912344546809266	CMakeFiles/ProvaSegnale.dir/client.c.o	c6842dffc43a6c87
 0	21	1650898559584287806	CMakeFiles/ProvaSegnale.dir/err_exit.c.o	ced140e9d330d529

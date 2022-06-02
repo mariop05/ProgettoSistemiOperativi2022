@@ -11,7 +11,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #define SIZE 256
-#define FILE_SIZE 4096
+#define FILE_SIZE 4032
 
 
 void create_directory(char *pathname){
@@ -104,15 +104,18 @@ void riempo_array_pari(char array[], int caratteri, int fd_file) {
 void stampo_array_divisione_file(char array[], int caratteri){
     int q;
     for(q = 0; q < caratteri; q++){
-        printf("%c", array[q]);
+        //printf("%c", array[q]);
     }
-    printf("\n");
+    //printf("\n");
 }
 int conta_caratteri(int open_file){
     off_t caratteri = lseek(open_file, -1, SEEK_END);
     //printf("caratteri: %ld\n", caratteri);
     if(lseek(open_file, 0, SEEK_SET) == -1)
         ErrExit("error lseek");
+    //Se il file è vuoto nessun carattere è presente
+    if(caratteri == -1)
+        caratteri = 0;
     return caratteri;
 }
 
