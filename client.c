@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "err_exit.h"
@@ -16,10 +17,18 @@
 #include "shared_memory.h"
 #include "semaphore.h"
 
+#define REQUEST 0
+#define DATA_READY 1
+
 struct mesg_buffer{
     long mesg_type;
     char mesg_text[100];
 } message;
+union semun {
+    int val; /* Value for SETVAL */
+    struct semid_ds *buf; /* Buffer for IPC_STAT, IPC_SET */
+    unsigned short *array; /* Array for GETALL, SETALL */
+};
 
 
 extern char **environ;
@@ -47,6 +56,8 @@ int main (int argc, char *argv[]) {
     int open_file;
     int shmid;
     int msgid;
+    int semaforo_di_supporto;
+    int semaforo;
     key_t key;
     key_t key_message_queue;
     char *username;
@@ -62,8 +73,29 @@ int main (int argc, char *argv[]) {
     int fd2; // Restituisce il valore dell'apertura della fifo 2
     char *myfifo1 = "/tmp/myfifo1";\
     char *myfifo2 = "/tmp/myfifo2";
+    union semun arg;
+    unsigned short values[] = {0};
     off_t caratteri;
 
+    //Creo la SHARED MEMORY
+    //ftok to generate a unique key
+    key = generateUniqueKey();
+    printf("key: %d\n", key);
+    // Alloco segmento memoria condivisa
+    shmid = alloc_shared_memory(key, 1024, S_IRUSR | S_IWUSR);
+    printf("shmid: %d\n", shmid);
+
+    //Creo la MESSAGE QUEUE
+    //Creo coda di messaggi
+
+    key_message_queue = generate_unique_key_message_queue();
+    printf("key message queue: %d\n", key_message_queue);
+    //Create a message queue
+    msgid = create_message_queue(key_message_queue);
+    printf("msgid: %d\n", msgid);
+    message.mesg_type = 1;
+
+    //INIZIALIZZO IL SET DI SEGNALI
     printf("pid: %d\n", pid);
     // set of signals (N.B. it is not initialized!)
     // initialize mySet to contain all signals
@@ -73,6 +105,13 @@ int main (int argc, char *argv[]) {
     sigdelset(&mySet, SIGUSR1);
     // blocking all signals but SIGINT
     sigprocmask(SIG_SETMASK, &mySet, NULL);
+
+    //CREO SET SEMAFORI
+    semaforo_di_supporto = creazione_semaforo(IPC_PRIVATE, 1, IPC_CREAT);
+    printf("semaforo di supporto: %d\n", semaforo_di_supporto);
+    arg.array = values;
+    if(semctl(semaforo_di_supporto, 0, SETALL, arg) == -1)
+        ErrExit("semctl SETALL failed");
 
 
     // set the function sigHandler as handler for the signal SIGINT
@@ -136,29 +175,21 @@ int main (int argc, char *argv[]) {
     //Apertura fifo in scrittura e scrittura su fifo
     fd1 = apertura_fifo_scrittura(myfifo1);
     scrittura_fifo(fd1, file_sendme);
+    printf("Scrittura su fifo terminata\n");
+    //unlock
+    semOp(semaforo_di_supporto, REQUEST, 1);
 
 
-    //ftok to generate a unique key
-    key = generateUniqueKey();
-    printf("key: %d\n", key);
-    //Legge la sharedMemory
-    shmid = alloc_shared_memory(key, 1024, S_IRUSR | S_IWUSR);
-    printf("shmid: %d\n", shmid);
+    //Attacco il segmento di memoria condivisa
     str = (char *) shmat(shmid, (void*) 0, 0);
-    sleep(2);
     printf("Date read: %s\n", str);
 
 
-    //Creo coda di messaggi
-    key_message_queue = generate_unique_key_message_queue();
-    printf("key message queue: %d\n", key_message_queue);
-    //Create a message queue
-    msgid = create_message_queue(key_message_queue);
-    printf("msgid: %d\n", msgid);
-    message.mesg_type = 1;
     // msgrcv to receive message
     printf("msgrcv: %ld\n", msgrcv(msgid, &message, sizeof(message), 0, 0));
     printf("Received message queue: %s\n", message.mesg_text);
+
+
 
 
     //printf("count: %d\n", count);
