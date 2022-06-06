@@ -83,20 +83,18 @@ int main() {
 
     printf("numero file sendme_ : %d\n", ricevo_file_sendme[0]);
 
-    semOp(semid, DATA_READY, 1);
+    semOp(semid, REQUEST, 1);
     //shmat to attach to shared memory
     str = (char *) shmat(shmid, (void*)0, 0);
     //Invio la string start sulla shared memory
     strcpy(str, "start");
     printf("Send message: %s\n", str);
 
-    semOp(semid, DATA_READY, 1);
-
     //Scrittura e invio messaggio tramite Message Queue
     strcpy(message.mesg_text, "Ciao sono message queue");
     msgsnd(msgid, &message, sizeof(message), 0);
     //unlock client
-    semOp(semid, REQUEST, 1);
+    semOp(semid, DATA_READY, 1);
     printf("Messaggio message queue: %s\n", message.mesg_text);
     // Rimozione delle FIFO
     rimozioneFifo(myfifo1);

@@ -176,14 +176,13 @@ int main (int argc, char *argv[]) {
     fd1 = apertura_fifo_scrittura(myfifo1);
     scrittura_fifo(fd1, file_sendme);
     printf("Scrittura su fifo terminata\n");
-    //unlock
+    //wait
+    printf("prima chiamata semaforo\n");
     semOp(semaforo_di_supporto, REQUEST, 1);
-
 
     //Attacco il segmento di memoria condivisa
     str = (char *) shmat(shmid, (void*) 0, 0);
     printf("Date read: %s\n", str);
-
 
     // msgrcv to receive message
     printf("msgrcv: %ld\n", msgrcv(msgid, &message, sizeof(message), 0, 0));
