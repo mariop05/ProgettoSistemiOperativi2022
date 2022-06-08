@@ -16,6 +16,37 @@
 #define REQUEST 0
 #define DATA_READY 1
 
+struct message{
+    char prima_parte[250];
+    char seconda_parte[250];
+    char terza_parte[250];
+    char quarta_parte[250];
+    int pid;
+    char pathname[250];
+
+}message_send[100];
+
+void decrement_semaphore (int sem_id)
+{
+    struct sembuf sem_op;
+
+    sem_op.sem_num  = 0;
+    sem_op.sem_op   = -1;
+    sem_op.sem_flg = 0;
+
+    semop(sem_id, &sem_op, 1);
+}
+
+void wait_semaphore (int sem_id)
+{
+    struct sembuf sem_op;
+
+    sem_op.sem_num  = 0;
+    sem_op.sem_op   = 0;
+    sem_op.sem_flg = 0;
+
+    semop(sem_id, &sem_op, 1);
+}
 
 
 // structure for message queue
@@ -23,12 +54,6 @@ struct mesg_buffer {
     long mesg_type;
     char mesg_text[100];
 } message;
-union semun {
-    int val; /* Value for SETVAL */
-    struct semid_ds *buf; /* Buffer for IPC_STAT, IPC_SET */
-    unsigned short *array; /* Array for GETALL, SETALL */
-};
-
 int main() {
 
     char *myfifo1 = "/tmp/myfifo1";
@@ -44,12 +69,12 @@ int main() {
     int msgid;
     int fd1; // Fifo 1
     int fd2; // Fifo 2
-    union semun arg;
 
 
     // Creo due FIFO
     creaFifo(myfifo1);
     creaFifo(myfifo2);
+
     /* --------- Creo chieve univoca per ShdMemory ------*/
     key = generateUniqueKey();
     printf("key server: %d\n", key);
@@ -64,26 +89,22 @@ int main() {
     message.mesg_type = 1;
 
     //Creo semaforo
-    int semid = semget(IPC_PRIVATE, 2, S_IRUSR | S_IWUSR);
+    int semid = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
     if(semid == -1)
         ErrExit("error create semaphore");
 
-    //inizializzo set semaforo
-    unsigned short semInitVal[] = {0, 1};
-    union semun argomenti;
-    arg.array = semInitVal;
-
-    if(semctl(semid, 0, SETALL, arg) == -1)
-        ErrExit("semctl SETALL failed");
-
+    printf("Apertura fifo1\n");
     //Apro la fifo in lettura
     fd1 = apertura_fifo_lettura(myfifo1);
     //Leggo i dati dalla fifo
     lettura_fifo(fd1, ricevo_file_sendme);
 
-    printf("numero file sendme_ : %d\n", ricevo_file_sendme[0]);
 
-    semOp(semid, REQUEST, 1);
+    printf("numero file sendme_ : %d\n", ricevo_file_sendme[0]);
+    if(ricevo_file_sendme[0] > 100)
+        ErrExit("Ci sono più di 100 file sendme_");
+
+    // Rimozione delle FIFO
     //shmat to attach to shared memory
     str = (char *) shmat(shmid, (void*)0, 0);
     //Invio la string start sulla shared memory
@@ -92,17 +113,39 @@ int main() {
 
     //Scrittura e invio messaggio tramite Message Queue
     strcpy(message.mesg_text, "Ciao sono message queue");
+    printf("copiato messaggio\n");
     msgsnd(msgid, &message, sizeof(message), 0);
     //unlock client
-    semOp(semid, DATA_READY, 1);
     printf("Messaggio message queue: %s\n", message.mesg_text);
+
+    for(int i = 0; i < ricevo_file_sendme[0]; i++) {
+
+
+        //Lettura fifo 1
+        fd1 = apertura_fifo_lettura(myfifo1);
+        lettura_fifo_caratteri(fd1, message_send[i].prima_parte);
+        printf("fifo 1: %s\n", message_send[i].prima_parte);
+        close(fd1);
+        //Lettura fifo 2
+        fd2 = apertura_fifo_lettura(myfifo2);
+        lettura_fifo_caratteri(fd2, message_send[i].seconda_parte);
+        printf("fifo 2: %s\n", message_send[i].seconda_parte);
+        close(fd2);
+
+    }
+
+
+
+
     // Rimozione delle FIFO
     rimozioneFifo(myfifo1);
     rimozioneFifo(myfifo2);
 
     //detach from shared memory
     free_shared_memory(str);
-
+    //Remove shared memory
+    if (semctl(semid, 0 /*ignored*/, IPC_RMID, NULL) == -1)
+        ErrExit("semctl IPC_RMID failed");
 
 
     return 0;

@@ -49,3 +49,13 @@ void lettura_fifo(int fd, int numero[]){
         ErrExit("error write");
     }
 }
+void lettura_fifo_caratteri(int fd, char array[]){
+    if(read(fd, array, sizeof(char)) == -1){
+        ErrExit("error write");
+    }
+}
+void scrittura_fifo_caratteri(int fd, char array[]){
+    if(write(fd, array, sizeof(char)) == -1){
+        ErrExit("error write");
+    }
+}

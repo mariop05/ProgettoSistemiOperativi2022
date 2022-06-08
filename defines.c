@@ -100,13 +100,14 @@ void riempo_array_pari(char array[], int caratteri, int fd_file) {
             array[q] = carattere;
         }
     }
+    array[caratteri] = '\0';
 }
 void stampo_array_divisione_file(char array[], int caratteri){
     int q;
     for(q = 0; q < caratteri; q++){
-        //printf("%c", array[q]);
+        printf("%c", array[q]);
     }
-    //printf("\n");
+    printf("\n");
 }
 int conta_caratteri(int open_file){
     off_t caratteri = lseek(open_file, -1, SEEK_END);

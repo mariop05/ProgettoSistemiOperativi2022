@@ -10,3 +10,5 @@ int apertura_fifo_scrittura(char *myFifo);
 int apertura_fifo_lettura(char *myFifo);
 void scrittura_fifo(int fd, int file_sendme[]);
 void lettura_fifo(int fd, int numero[]);
+void lettura_fifo_caratteri(int fd, char array[]);
+void scrittura_fifo_caratteri(int fd, char array[]);
